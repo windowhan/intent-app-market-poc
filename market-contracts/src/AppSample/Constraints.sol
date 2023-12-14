@@ -3,26 +3,28 @@ pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "../IntentMarket/OrderBook.sol";
 
+import "../IntentMarket/OrderMatchEngine.sol";
+import "forge-std/console.sol";
 
 contract Constraints is Ownable {
-    OrderBook public orderBook;
-    uint8 scoringType=1;
+    //OrderBook public orderBook;
+    OrderMatchEngine public engine;
+    uint8 public scoringType = 1;
 
     function setScoringType(uint8 variable) public onlyOwner {
         scoringType = variable;
     }
 
-    function setOrderBook(address orderBook_) public onlyOwner{
-        orderBook = OrderBook(orderBook_);
+    function setOrderMatchEngine(address target) public onlyOwner{
+        engine = OrderMatchEngine(target);
     }
 
     function getScoringType() external view returns (uint8) {
         // 0 - 빨리 Order 제출한 사람이 Winner
         // 1 - Score 오름차순으로 Winner 산출
         // 2 - Score 내림차순으로 Winner 산출
-        return scoringType;
+        return 1;
     }
 
     function getScore(bytes calldata conditions, bytes calldata orderIntent) external view returns (uint256 score) {
@@ -31,9 +33,9 @@ contract Constraints is Ownable {
         return (submitOutputAmount-outputAmount);
     }
 
-    function getPrevState(address wallet, bytes calldata config) external view returns (bytes memory) {
-        address swapInputAsset = address(uint160(bytes20(config[0:20])));
-        address swapOutputAsset = address(uint160(bytes20(config[20:40])));
+    function getPrevState(address wallet, bytes calldata constraints) external view returns (bytes memory) {
+        address swapInputAsset = address(uint160(bytes20(constraints[32:52])));
+        address swapOutputAsset = address(uint160(bytes20(constraints[84:104])));
 
         uint256 prevInputAssetBalance = IERC20(swapInputAsset).balanceOf(wallet);
         uint256 prevOutputAssetBalance = IERC20(swapOutputAsset).balanceOf(wallet);
@@ -59,9 +61,14 @@ contract Constraints is Ownable {
         uint256 afterInputAssetBalance = IERC20(swapInputAsset).balanceOf(_wallet);
         uint256 afterOutputAssetBalance = IERC20(swapOutputAsset).balanceOf(_wallet);
 
+        console.log("check-1");
+        console.log("prevInputAssetBalance : %d, afterInputAssetBalance : %d", prevInputAssetBalance, afterInputAssetBalance);
+        console.log("afterOutputAssetBalance : %d, prevOutputAssetBalance : %d", afterOutputAssetBalance, prevOutputAssetBalance);
+        console.logBytes(orderIntent);
         uint256 inputAmount = prevInputAssetBalance - afterInputAssetBalance;
         uint256 outputAmount = afterOutputAssetBalance - prevOutputAssetBalance;
         uint256 submitOutputAmount = uint256(bytes32(orderIntent[0:32]));
+        console.log("check-2");
 
         if(swapInput < inputAmount) {
             revert("too much input amount!!!");
@@ -71,7 +78,7 @@ contract Constraints is Ownable {
             revert("too little output amount!!!");
         }
 
-        if(marketTiming < block.timestamp) {
+        if(marketTiming > block.timestamp) {
             revert("not ready..");
         }
         return true;

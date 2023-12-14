@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
+import {AppLauncher} from "../IntentMarket/AppLauncher.sol";
 import {Call} from "kernel/src/common/Structs.sol";
 
 interface IRouter {
@@ -26,52 +27,51 @@ contract App is Ownable{
     address public router;
     address public appLauncher;
 
-    function setLauncher(address _appLauncher) public onlyOwner {
+    function setLauncher(address _appLauncher) public {
         appLauncher = _appLauncher;
     }
 
-    function setConfig(address _router) public onlyOwner {
+    function setRouter(address _router) public {
         router = _router;
     }
-    function setPath(address from, address to, address[] calldata pathList) public onlyOwner {
+    function setPath(address from, address to, address[] calldata pathList) public {
         PathList memory list;
         list.path = pathList;
         pathOptimization[from][to] = list;
     }
 
     // getUserCallData와 main은 꼭 짜여져야함.
-    function getUserCallData(address owner, bytes memory args) public view returns (Call[] memory) {
-        // getUserCallData 인자로 들어가는 data와 main에 들어가는 args는 똑같아야함.
-        address fromAsset = address(uint160(bytes20(args[0:20])));
-        address toAsset = address(uint160(bytes20(args[20:40])));
-        uint256 amount = uint256(bytes32(args[40:72]));
+    function getUserCallData(address owner, bytes calldata args, uint256 intentID) public view returns (Call[] memory) {
+        uint256 swapInput = uint256(bytes32(args[0:32]));
+        address swapInputAsset = address(uint160(bytes20(args[32:52])));
 
         Call[] memory processedArgs = new Call[](2);
-        processedArgs[0].to = fromAsset;
-        processedArgs[0].data = abi.encodeWithSelector(IERC20.approve.selector, address(this), amount);
+        processedArgs[0].to = swapInputAsset;
+        processedArgs[0].data = abi.encodeWithSelector(IERC20.approve.selector, address(this), swapInput);
 
-        processedArgs[1].to = address(this);
-        processedArgs[1].data = abi.encodeWithSelector(this.main.selector, owner, args);
+        processedArgs[1].to = appLauncher;
+        processedArgs[1].data = abi.encodeWithSelector(AppLauncher.run.selector, intentID);
 
         return processedArgs;
     }
 
-    function main(address owner, bytes calldata args) public {
+    function main(address wallet, bytes calldata args) public {
         if(msg.sender!=appLauncher){
             revert("appLauncher only!");
         }
-        address fromAsset = address(uint160(bytes20(args[0:20])));
-        address toAsset = address(uint160(bytes20(args[20:40])));
-        uint256 amount = uint256(bytes32(args[40:72]));
 
-        IERC20(fromAsset).transferFrom(owner, address(this), amount);
-        IERC20(fromAsset).approve(router, type(uint256).max);
-        PathList memory optPath = pathOptimization[fromAsset][toAsset];
+        uint256 swapInput = uint256(bytes32(args[0:32]));
+        address swapInputAsset = address(uint160(bytes20(args[32:52])));
+        address swapOutputAsset = address(uint160(bytes20(args[84:104])));
+
+        IERC20(swapInputAsset).transferFrom(wallet, address(this), swapInput);
+        IERC20(swapInputAsset).approve(router, type(uint256).max);
+        PathList memory optPath = pathOptimization[swapInputAsset][swapOutputAsset];
         if(optPath.path.length == 0) {
             revert("not set path");
         }
 
-        IRouter(router).swapExactTokensForTokens(amount, 0, optPath.path, owner, block.timestamp*2);
-        IERC20(fromAsset).approve(router, 0);
+        IRouter(router).swapExactTokensForTokens(swapInput, 0, optPath.path, wallet, block.timestamp*2);
+        IERC20(swapInputAsset).approve(router, 0);
     }
 }

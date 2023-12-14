@@ -1,0 +1,6 @@
+[submodule "market-contracts/lib/I4337"]
+	path = market-contracts/lib/I4337
+	url = https://github.com/leekt/I4337
+[submodule "market-contracts/lib/openzeppelin-contracts"]
+	path = market-contracts/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts

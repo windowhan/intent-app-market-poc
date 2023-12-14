@@ -4,27 +4,30 @@ pragma solidity ^0.8.13;
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "forge-std/console.sol";
 
-    struct AppData {
-        string appName;
-        address appAddr;
-        address checkAddr;
-        string conditionJson;
-        address creator;
-        address wannaSecurityCouncil;
-        uint8 securityCouncilPass;
-        uint8 finalPass;
-        uint8 payFlag;
-        bytes prevAction;
-        address paymentCurrency;
-        uint128 price;
-        uint48 usePeriod;
-        string specificBundlerURL;
-    }
+struct AppData {
+    string appName;
+    address appAddr;
+    address checkAddr;
+    string uiMetaJson;
+    address creator;
+    address approveSecurityCouncil;
+    uint8 securityCouncilPass;
+    uint8 finalPass;
+    uint8 payFlag;
+    address paymentCurrency;
+    uint128 price;
+    uint48 usePeriod;
+    string description;
+    address[] whitelistExecutor;
+}
 
 contract MarketRegistry is Ownable{
     uint256 public appIndex;
     mapping(uint256=>AppData) public appInfo;
+    mapping(uint256=>uint256) public recentUpdateTime;
     mapping(address=>uint8) public securityCouncil;
+
+    uint256 constant public updateDelay = 3600;
 
     modifier onlyCreatorBeforePass(uint256 appId) {
         AppData memory appdata = appInfo[appId];
@@ -40,89 +43,63 @@ contract MarketRegistry is Ownable{
     }
 
     modifier onlySecurityConcil(uint256 appId) {
-        address wannaSecurityCouncil = appInfo[appId].wannaSecurityCouncil;
-        if(msg.sender!=wannaSecurityCouncil && securityCouncil[msg.sender]!=1){
+        address auditFirm = appInfo[appId].approveSecurityCouncil;
+        if(msg.sender!=auditFirm && securityCouncil[msg.sender]!=1){
             revert("not proper security council..");
         }
         _;
     }
 
-    function registerAppMetadata(string calldata appName, address intentApp, address checkAddr, string memory conditionJson, address wannaSecurityCouncil, uint8 payFlag, address paymentCurrency, uint128 price, uint48 usePeriod, string calldata specificBundlerURL, bytes calldata approveAsset) public returns (uint256 appId){
-        AppData memory appdata;
-        appdata.appName = appName;
-        appdata.appAddr = intentApp;
-        appdata.checkAddr = checkAddr;
-        appdata.conditionJson = conditionJson;
-        appdata.securityCouncilPass = 0;
-        appdata.finalPass = 0;
-        appdata.creator = msg.sender;
-        appdata.wannaSecurityCouncil = wannaSecurityCouncil;
 
-        appdata.payFlag = payFlag;
-        appdata.paymentCurrency = paymentCurrency;
-        appdata.price = price;
-        appdata.usePeriod = usePeriod;
-        appdata.approveAsset = approveAsset;
-        appdata.specificBundlerURL = specificBundlerURL;
-        console.log("appdata.specificBundlerURL : %s", appdata.specificBundlerURL);
-
-        appInfo[appIndex] = appdata;
+    function registerAppMetadata(AppData memory adParam) public returns (uint256 appId){
+        if(adParam.creator!=msg.sender)
+            revert("creator should be same for msg.sender");
+        adParam.finalPass = 0;
+        adParam.securityCouncilPass = 0;
+        appInfo[appIndex] = adParam;
+        recentUpdateTime[appIndex] = block.timestamp;
         appIndex += 1;
         return appIndex-1;
     }
 
-    function updateAppMetadata(uint128 appId, string calldata appName, address intentApp, address checkAddr, string memory conditionJson, address wannaSecurityCouncil, uint8 payFlag, address paymentCurrency, uint128 price, uint48 usePeriod, string calldata specificBundlerURL, bytes calldata approveAsset) public onlyCreatorBeforePass(appId){
-        AppData memory appdata = appInfo[appId];
+    function updateAppMetadata(uint128 appId, AppData memory adParam) public onlyCreatorBeforePass(appId){
+        AppData memory originalData = appInfo[appId];
+        if(adParam.creator!=msg.sender)
+            revert("creator should be same for msg.sender");
+        if(recentUpdateTime[appIndex] + updateDelay > block.timestamp)
+            revert("updateDelay is not passed..");
+        adParam.finalPass = originalData.finalPass;
+        adParam.securityCouncilPass = originalData.securityCouncilPass;
 
-        appdata.appName = appName;
-        appdata.appAddr = intentApp;
-        appdata.checkAddr = checkAddr;
-        appdata.conditionJson = conditionJson;
-
-        appdata.payFlag = payFlag;
-        appdata.paymentCurrency = paymentCurrency;
-        appdata.price = price;
-        appdata.usePeriod = usePeriod;
-        appdata.approveAsset = approveAsset;
-        appdata.specificBundlerURL = specificBundlerURL;
-
-        appInfo[appId] = appdata;
+        recentUpdateTime[appIndex] = block.timestamp;
+        appInfo[appId] = adParam;
     }
 
     /*
         SecurityCouncil Part
     */
     function approveSecurityCouncil(uint256 appId) public onlySecurityConcil(appId) {
+        if(recentUpdateTime[appId] + updateDelay > block.timestamp)
+            revert("updateDelay is not passed..");
         appInfo[appId].securityCouncilPass = 1;
     }
 
     function revokeSecurityCouncil(uint256 appId) public onlySecurityConcil(appId) {
         appInfo[appId].securityCouncilPass = 0;
+        recentUpdateTime[appId] = block.timestamp;
     }
-
 
     /*
         Admin Part
     */
-    function superUpdateOnlyAdmin(uint256 appId, string calldata appName, address intentApp, address checkAddr, string memory conditionJson, uint8 securityCouncilPass, uint8 finalPass, uint8 payFlag, address paymentCurrency, uint128 price, uint48 usePeriod, string calldata specificBundlerURL, bytes calldata approveAsset) public onlyOwner {
-        appInfo[appId].appName = appName;
-        appInfo[appId].appAddr = intentApp;
-        appInfo[appId].checkAddr = checkAddr;
-        appInfo[appId].conditionJson = conditionJson;
-
-        appInfo[appId].payFlag = payFlag;
-        appInfo[appId].paymentCurrency = paymentCurrency;
-        appInfo[appId].price = price;
-        appInfo[appId].usePeriod = usePeriod;
-
-        appInfo[appId].securityCouncilPass = securityCouncilPass;
-        appInfo[appId].finalPass = finalPass;
-
-        appdata.approveAsset = approveAsset;
-        appdata.specificBundlerURL = specificBundlerURL;
+    function superUpdateOnlyAdmin(uint256 appId, AppData memory adParam) public onlyOwner {
+        recentUpdateTime[appId] = block.timestamp;
+        appInfo[appId] = adParam;
     }
 
     function approveFinalPass(uint256 appId) public onlyOwner {
+        if(recentUpdateTime[appId] + updateDelay > block.timestamp)
+            revert("updateDelay is not passed..");
         appInfo[appId].finalPass = uint8(1);
     }
 

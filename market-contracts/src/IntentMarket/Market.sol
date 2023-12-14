@@ -23,7 +23,7 @@ contract Market {
         registry = MarketRegistry(_registry);
     }
 
-    function purchase(uint256 appId) public returns (bool){
+    function subscribe(uint256 appId) public returns (bool){
         (uint8 payFlag, address paymentCurrency, uint128 price, uint48 usePeriod, address creator) = registry.getAppPaymentInfo(appId);
         Subscription memory ss;
         if(payFlag == 0){

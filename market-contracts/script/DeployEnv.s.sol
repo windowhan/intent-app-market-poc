@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Script, console2} from "forge-std/Script.sol";
+import "forge-std/Script.sol";
 import "forge-std/console.sol";
 
-import "../src/IntentMarket/AppLauncher.sol";
+/*import "../src/IntentMarket/AppLauncher.sol";
 import "../src/IntentMarket/MarketRegistry.sol";
 import "../src/kernel-validator/MarketValidator.sol";
 
@@ -16,10 +16,10 @@ import "../lib/account-abstraction/contracts/interfaces/UserOperation.sol";
 
 import "../lib/solady/src/utils/ECDSA.sol";
 
-import "./interfaces/IKernelFactory.sol";
+import "./interfaces/IKernelFactory.sol";*/
 
 contract DeployEnv is Script {
-    address public admin;
+    /*address public admin;
     uint256 public adminPk = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
     address public securityCouncil; // ex) Kalos, Trail of bits, zellic and so on...
     uint256 public securityCouncilPk = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
@@ -146,5 +146,5 @@ contract DeployEnv is Script {
         //function registerAppMetadata(string calldata appName, address intentApp, address checkAddr, string memory conditionJson, address wannaSecurityCouncil, bool payFlag, address paymentCurrency, uint256 price, uint256 usePeriod) public
         string memory uijson = "{\"Inputdata\": [{\"name\": \"Input Amount\",\"uitype\": \"text\",\"datatype\": \"uint256\"},{\"name\": \"Input Asset\",\"uitype\": \"combo\",\"datatype\": \"string\", \"extraData\":[{\"text\":\"USDC\", \"value\":\"0xaf88d065e77c8cC2239327C5EDb3A432268e5831\"}, {\"text\":\"WETH\", \"value\":\"0x82aF49447D8a07e3bd95BD0d56f35241523fBab1\"}]},{\"name\": \"Output Amount\",\"uitype\": \"text\",\"datatype\": \"uint256\"},{\"name\": \"Output Asset\",\"uitype\": \"combo\",\"datatype\": \"string\", \"extraData\":[{\"text\":\"USDC\", \"value\":\"0xaf88d065e77c8cC2239327C5EDb3A432268e5831\"}, {\"text\":\"WETH\", \"value\":\"0x82aF49447D8a07e3bd95BD0d56f35241523fBab1\"}]},{\"name\":\"Market Timing\", \"uitype\":\"datetime-local\", \"datatype\":\"uint48\"}]}";
         targetAppId = registry.registerAppMetadata("testApp", address(app), address(contraints), uijson, securityCouncil, 0, address(0), 0, 0, "http://127.0.0.1:8001");
-    }
+    }*/
 }
