@@ -17,7 +17,10 @@ interface IRouter {
     ) external returns (uint[] memory amounts);
 }
 
-
+/// @title App
+/// @author windowhan (https://github.com/windowhan)
+/// @notice It is a contract that includes on-chain logic for executing intent.
+/// @dev It is a contract that includes on-chain logic for executing intent.
 contract App is Ownable{
     struct PathList {
         address[] path;
@@ -27,6 +30,9 @@ contract App is Ownable{
     address public router;
     address public appLauncher;
 
+    /*
+        The setLauncher, setRouter, and setPath functions are for the Sample. They are not always required to be defined.
+    */
     function setLauncher(address _appLauncher) public {
         appLauncher = _appLauncher;
     }
@@ -40,7 +46,11 @@ contract App is Ownable{
         pathOptimization[from][to] = list;
     }
 
-    // getUserCallData와 main은 꼭 짜여져야함.
+    /// @notice getUserCallData
+    /// @dev It is a function that defines the actions that need to be processed as per the user's desire within the intent.
+    /// @param owner The address of the wallet owner
+    /// @param args It is the data required to define the intent.
+    /// @param intentID It is the ID of the intent that needs to be assigned in the OrderMatchEngine Contract.
     function getUserCallData(address owner, bytes calldata args, uint256 intentID) public view returns (Call[] memory) {
         uint256 swapInput = uint256(bytes32(args[0:32]));
         address swapInputAsset = address(uint160(bytes20(args[32:52])));
@@ -55,6 +65,10 @@ contract App is Ownable{
         return processedArgs;
     }
 
+    /// @notice App's main function
+    /// @dev It is a formalized function that encapsulates the logic where the intent is actually executed.
+    /// @param wallet The address of the wallet that executes intent
+    /// @param args It is the data required to define the intent.
     function main(address wallet, bytes calldata args) public {
         if(msg.sender!=appLauncher){
             revert("appLauncher only!");
