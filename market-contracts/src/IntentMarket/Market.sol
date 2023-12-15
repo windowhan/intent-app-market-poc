@@ -5,6 +5,10 @@ import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./MarketRegistry.sol";
 
 
+/// @title Market
+/// @author windowhan (https://github.com/windowhan)
+/// @notice When an App for executing an Intent is registered in the Market, it provides a subscription feature. Apps can be offered for free, but there is also an option to provide them for a fee.
+/// @dev -
 contract Market {
     MarketRegistry public registry;
 
@@ -23,6 +27,10 @@ contract Market {
         registry = MarketRegistry(_registry);
     }
 
+    /// @notice subscribe
+    /// @dev The user requests a subscription to the Intent App by executing the subscribe function. If it is a paid Intent App, they must pay a specific amount in the token designated by the developer, according to the information stored in the Market Registry. This payment allows for a subscription for a certain period.
+    /// @param appId, Intent App ID
+    /// @return result, The user requests a subscription to an Intent App. If it is a paid Intent App, a specific amount must be paid in the token designated by the developer, according to the information stored in the MarketRegistry. This payment allows for a subscription for a certain period. The result indicates whether this series of processes has been executed successfully.
     function subscribe(uint256 appId) public returns (bool){
         (uint8 payFlag, address paymentCurrency, uint128 price, uint48 usePeriod, address creator) = registry.getAppPaymentInfo(appId);
         Subscription memory ss;
@@ -46,8 +54,13 @@ contract Market {
         return true;
     }
 
-    function checkExpireSubscription(uint256 appId, address user) public view {
-        Subscription memory data = subscriptionData[appId][user];
+    /// @notice checkExpireSubscription
+    /// @dev It is a function that checks whether the user's subscription period has expired.
+    /// @param appId, Intent App ID
+    /// @param wallet, The address of the wallet that executes intent
+    /// @return result, It is a value indicating whether the user's subscription period has expired or not.
+    function checkExpireSubscription(uint256 appId, address wallet) public view {
+        Subscription memory data = subscriptionData[appId][wallet];
         if(data.startTime == 0) {
             revert("Please purchase intent application");
         }
