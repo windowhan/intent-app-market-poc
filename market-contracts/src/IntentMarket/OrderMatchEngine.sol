@@ -30,7 +30,7 @@ struct Order {
     uint256 submitTime;
 }
 
-contract OrderMatchEngine is Ownable {
+contract OrderMatchEngine is Ownable, Staking {
     MarketRegistry public registry;
     address public launcher;
     uint256 intentCount = 0;

@@ -26,7 +26,7 @@ contract SolverHelper {
         market = Market(market_);
         app = App(app_);
         registry = MarketRegistry(registry_);
-        engine = OrderMatchEngine(engine_);
+        engine = OrderMatchEngine(payable(engine_));
         ep = IEntryPoint(payable(ep_));
     }
 

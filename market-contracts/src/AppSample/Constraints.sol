@@ -18,7 +18,7 @@ contract Constraints is Ownable {
     /// @dev -
     /// @param target, The address of the OrderMatchEngine Contract
     function setOrderMatchEngine(address target) public onlyOwner{
-        engine = OrderMatchEngine(target);
+        engine = OrderMatchEngine(payable(target));
     }
 
     /// @notice getScoringType

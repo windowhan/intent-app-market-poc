@@ -21,7 +21,7 @@ contract AppLauncher {
     constructor(address _marketRegistry, address _market, address _engine) {
         marketRegistry = MarketRegistry(_marketRegistry);
         market = Market(_market);
-        engine = OrderMatchEngine(_engine);
+        engine = OrderMatchEngine(payable(_engine));
     }
 
     /// @notice run
