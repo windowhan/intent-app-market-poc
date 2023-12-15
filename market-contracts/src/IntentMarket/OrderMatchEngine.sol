@@ -5,6 +5,7 @@ import {AppData, MarketRegistry} from "./MarketRegistry.sol";
 import {Call} from "kernel/src/common/Structs.sol";
 import {Constraints} from "../AppSample/Constraints.sol";
 import {IEntryPoint, UserOperation} from "I4337/interfaces/IEntryPoint.sol";
+import {Staking} from "./Staking.sol";
 
 
 import "openzeppelin-contracts/contracts/access/Ownable.sol";

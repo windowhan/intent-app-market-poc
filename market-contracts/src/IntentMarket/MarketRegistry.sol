@@ -78,6 +78,7 @@ contract MarketRegistry is Ownable{
             revert("creator should be same for msg.sender");
         if(recentUpdateTime[appIndex] + updateDelay > block.timestamp)
             revert("updateDelay is not passed..");
+        require(originalData.finalPass!=0 && originalData.securityCouncilPass!=0);
         adParam.finalPass = originalData.finalPass;
         adParam.securityCouncilPass = originalData.securityCouncilPass;
 
