@@ -18,6 +18,7 @@ import "forge-std/console.sol";
     address creator;
     uint256 executionPeriod;
     uint256 executionDeadline;
+        bool executed;
     UserOperation op;
 }
 
@@ -30,6 +31,7 @@ struct Order {
 
 contract OrderMatchEngine is Ownable {
     MarketRegistry public registry;
+    address public launcher;
     uint256 intentCount = 0;
     mapping(uint256=>Intent) public intentList;
     mapping(uint256=>Order) public orderInfo;
@@ -39,6 +41,10 @@ contract OrderMatchEngine is Ownable {
 
     function setMarketRegistry(address registry_) public onlyOwner {
         registry = MarketRegistry(registry_);
+    }
+
+    function setLauncher(address launcher_) public onlyOwner {
+        launcher = launcher_;
     }
 
     function openIntent(uint256 appID, address wallet, bytes memory conditions, bytes memory extraData) public returns (uint256 intentId){
@@ -115,10 +121,10 @@ contract OrderMatchEngine is Ownable {
         delete orderInfo[intentId];
     }
 
-    // 실행을 완료하면 Executed Flag 설정하는... 그런거
     function setExecuted(uint256 intentId) public {
+        require(msg.sender == launcher && intentList[intentId].executed==false);
         require(intentList[intentId].closeTime > block.timestamp);
-        //require(intentList[intentID].closeTime > )
+        intentList[intentId].executed = true;
     }
 
     function forceCloseIntent(uint256 intentId) public {

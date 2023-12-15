@@ -26,7 +26,8 @@ contract AppLauncher {
     function run(uint256 intentID) public {
         require(engine.getWinner(intentID) == tx.origin, "not winner!");
 
-        (uint256 appId, address wallet, bytes memory constraints,,,,uint256 executionDeadline, UserOperation memory op) = engine.intentList(intentID);
+        (uint256 appId, address wallet, bytes memory constraints,,,,uint256 executionDeadline, bool executed,UserOperation memory op) = engine.intentList(intentID);
+        require(executed==false, "already executed!");
         (bytes memory orderIntent,,,) = engine.orderInfo(intentID);
         (address appAddr, address checkAddr) = marketRegistry.getAppExecutionInfo(appId);
         market.checkExpireSubscription(appId, msg.sender);
@@ -35,6 +36,7 @@ contract AppLauncher {
         App(appAddr).main(msg.sender, constraints);
         if(Constraints(checkAddr).check(msg.sender, prevState, constraints, orderIntent)==false)
             revert("constraints violation!");
+        engine.setExecuted(intentID);
     }
 }
 
