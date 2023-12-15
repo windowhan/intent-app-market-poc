@@ -48,9 +48,10 @@ contract App is Ownable{
 
     /// @notice getUserCallData
     /// @dev It is a function that defines the actions that need to be processed as per the user's desire within the intent.
-    /// @param owner The address of the wallet owner
-    /// @param args It is the data required to define the intent.
-    /// @param intentID It is the ID of the intent that needs to be assigned in the OrderMatchEngine Contract.
+    /// @param owner, The address of the wallet owner
+    /// @param args, It is the data required to define the intent.
+    /// @param intentID, It is the ID of the intent that needs to be assigned in the OrderMatchEngine Contract.
+    /// @return calls, It is the value that defines what action the intent will take.
     function getUserCallData(address owner, bytes calldata args, uint256 intentID) public view returns (Call[] memory) {
         uint256 swapInput = uint256(bytes32(args[0:32]));
         address swapInputAsset = address(uint160(bytes20(args[32:52])));
@@ -67,8 +68,8 @@ contract App is Ownable{
 
     /// @notice App's main function
     /// @dev It is a formalized function that encapsulates the logic where the intent is actually executed.
-    /// @param wallet The address of the wallet that executes intent
-    /// @param args It is the data required to define the intent.
+    /// @param wallet, The address of the wallet that executes intent
+    /// @param args, It is the data required to define the intent.
     function main(address wallet, bytes calldata args) public {
         if(msg.sender!=appLauncher){
             revert("appLauncher only!");
