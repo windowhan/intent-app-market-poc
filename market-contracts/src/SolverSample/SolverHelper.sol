@@ -9,7 +9,10 @@ import "../AppSample/App.sol";
 
 import {IEntryPoint, UserOperation} from "I4337/interfaces/IEntryPoint.sol";
 
-
+/// @title SolverHelper
+/// @author windowhan (https://github.com/windowhan)
+/// @notice This is a sample solverhelper contract. The reason for writing this contract is to define the actions a solver wants to take before and after executing a user's intent.
+/// @dev -
 contract SolverHelper {
     AppLauncher public launcher;
     Market public market;
