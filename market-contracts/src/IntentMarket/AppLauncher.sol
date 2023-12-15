@@ -9,8 +9,10 @@ import {Call} from "kernel/src/common/Structs.sol";
 import {App} from "../AppSample/App.sol";
 import {Constraints} from "../AppSample/Constraints.sol";
 
-/// @notice AppLauncher
+/// @title AppLauncher
 /// @author windowhan (https://github.com/windowhan)
+/// @notice All Intent Apps must be executed using the AppLauncher Contract.
+/// @dev -
 contract AppLauncher {
     MarketRegistry public marketRegistry;
     Market public market;
@@ -22,6 +24,9 @@ contract AppLauncher {
         engine = OrderMatchEngine(_engine);
     }
 
+    /// @notice run
+    /// @dev This function checks if a user is subscribed to an Intent App based on the data uploaded to the OrderMatchEngine, and verifies whether the minimum results desired by the user have been achieved.
+    /// @param intentID, This variable represents the ID of the Intent posted by the user in the Auction on the OrderMatchEngine
     function run(uint256 intentID) public {
         require(engine.getWinner(intentID) == tx.origin, "not winner!");
 

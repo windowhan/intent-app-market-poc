@@ -21,6 +21,10 @@ struct AppData {
     address[] whitelistExecutor;
 }
 
+/// @title MarketRegistry
+/// @author windowhan (https://github.com/windowhan)
+/// @notice -
+/// @dev -
 contract MarketRegistry is Ownable{
     uint256 public appIndex;
     mapping(uint256=>AppData) public appInfo;
@@ -51,6 +55,9 @@ contract MarketRegistry is Ownable{
     }
 
 
+    /// @notice Registers a new app with its metadata.
+    /// @param adParam The metadata for the app being registered.
+    /// @return appId The ID assigned to the newly registered app.
     function registerAppMetadata(AppData memory adParam) public returns (uint256 appId){
         if(adParam.creator!=msg.sender)
             revert("creator should be same for msg.sender");
@@ -62,6 +69,9 @@ contract MarketRegistry is Ownable{
         return appIndex-1;
     }
 
+    /// @notice Updates the metadata of an existing registration proposal.
+    /// @param appId The ID of the app to update.
+    /// @param adParam The new metadata for the app.
     function updateAppMetadata(uint128 appId, AppData memory adParam) public onlyCreatorBeforePass(appId){
         AppData memory originalData = appInfo[appId];
         if(adParam.creator!=msg.sender)
@@ -75,23 +85,21 @@ contract MarketRegistry is Ownable{
         appInfo[appId] = adParam;
     }
 
-    /*
-        SecurityCouncil Part
-    */
+    /// @notice approve app by security council
+    /// @param appId The ID of the app to approve by security council.
     function approveSecurityCouncil(uint256 appId) public onlySecurityConcil(appId) {
         if(recentUpdateTime[appId] + updateDelay > block.timestamp)
             revert("updateDelay is not passed..");
         appInfo[appId].securityCouncilPass = 1;
     }
 
+    /// @notice revoke app by security council
+    /// @param appId The ID of the app to revoke by security council.
     function revokeSecurityCouncil(uint256 appId) public onlySecurityConcil(appId) {
         appInfo[appId].securityCouncilPass = 0;
         recentUpdateTime[appId] = block.timestamp;
     }
 
-    /*
-        Admin Part
-    */
     function superUpdateOnlyAdmin(uint256 appId, AppData memory adParam) public onlyOwner {
         recentUpdateTime[appId] = block.timestamp;
         appInfo[appId] = adParam;
