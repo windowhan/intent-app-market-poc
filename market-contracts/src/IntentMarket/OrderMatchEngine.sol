@@ -83,6 +83,21 @@ contract OrderMatchEngine is Ownable {
         uint8 orderTypeFlag = Constraints(appdata.checkAddr).getScoringType();
         Constraints constraints = Constraints(appdata.checkAddr);
 
+
+        address[] memory whitelistExecutor = appdata.whitelistExecutor;
+        bool executeFlag = false;
+
+        if(whitelistExecutor.length==0)
+            executeFlag = true;
+        else {
+            for(uint i=0;i<whitelistExecutor.length;i++){
+                if(tx.origin==whitelistExecutor[i])
+                    executeFlag = true;
+            }
+        }
+
+        require(executeFlag == true, "No permission submitOrder");
+
         if(orderTypeFlag == 0){
             if(orderInfo[intentID].submitTime==0){
                 orderInfo[intentID].submitTime = block.timestamp;
