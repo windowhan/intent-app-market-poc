@@ -50,7 +50,7 @@ contract OrderMatchEngine is Ownable, Staking {
 
     function openIntent(uint256 appID, address wallet, bytes memory conditions, bytes memory extraData) public returns (uint256 intentId){
         (uint256 closeTime, UserOperation memory userOp) = abi.decode(extraData, (uint, UserOperation));
-        require((block.timestamp + closeTime) >= (block.timestamp + 5 minutes), "closeTime must be larger than (block.timestamp + 5 minutes)");
+        require((block.timestamp + closeTime) >= (block.timestamp + 5 seconds), "closeTime must be larger than (block.timestamp + 5 seconds)");
         require(msg.sender == wallet, "invalid msg.sender");
         Intent memory intent;
         intent.creator = msg.sender;
