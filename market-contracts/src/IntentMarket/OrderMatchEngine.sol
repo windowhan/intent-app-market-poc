@@ -40,6 +40,8 @@ contract OrderMatchEngine is Ownable {
     mapping(address=>uint256) public recentActionTime;
 
     uint256 public constant minimumDeposit = 1 ether;
+    uint256 public constant slashingAmount = 0.01 ether;
+    uint256 public constant winnerDeadline = 3 minutes;
 
     event OrderTempWinner(uint256 intentID, uint8 scoringType, uint256 score, address sender);
     event OpenIntent(uint256 intentID, address creator, uint256 closeTime, uint256 appID, address wallet);
@@ -56,7 +58,11 @@ contract OrderMatchEngine is Ownable {
         payable(msg.sender).call{value:amount}("");
     }
 
-    function checkSlashEvidence() external payable {
+    function slash(uint256 intentID) external payable {
+        if(orderInfo[intentID].submitTime + winnerDeadline < block.timestamp) {
+            depositInfo[orderInfo[intentID].sender] -= slashingAmount;
+            payable(msg.sender).call{value:slashingAmount}("");
+        }
     }
 
     function setMarketRegistry(address registry_) public onlyOwner {
