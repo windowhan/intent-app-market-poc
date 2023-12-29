@@ -5,7 +5,6 @@ import {AppData, MarketRegistry} from "./MarketRegistry.sol";
 import {Call} from "kernel/src/common/Structs.sol";
 import {Constraints} from "../AppSample/Constraints.sol";
 import {IEntryPoint, UserOperation} from "I4337/interfaces/IEntryPoint.sol";
-import {Staking} from "./Staking.sol";
 
 
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
@@ -30,15 +29,35 @@ struct Order {
     uint256 submitTime;
 }
 
-contract OrderMatchEngine is Ownable, Staking {
+contract OrderMatchEngine is Ownable {
     MarketRegistry public registry;
     address public launcher;
     uint256 intentCount = 0;
     mapping(uint256=>Intent) public intentList;
     mapping(uint256=>Order) public orderInfo;
 
+    mapping(address=>uint256) public depositInfo;
+    mapping(address=>uint256) public recentActionTime;
+
+    uint256 public constant minimumDeposit = 1 ether;
+
     event OrderTempWinner(uint256 intentID, uint8 scoringType, uint256 score, address sender);
     event OpenIntent(uint256 intentID, address creator, uint256 closeTime, uint256 appID, address wallet);
+
+    function deposit() external payable {
+        depositInfo[msg.sender] += msg.value;
+        recentActionTime[msg.sender] = block.timestamp;
+    }
+
+    function withdraw(uint256 amount) external {
+        require(amount >= depositInfo[msg.sender], "amount cannot exceed deposit");
+        require(recentActionTime[msg.sender] + 7 days < block.timestamp, "You can withdraw money after 7 days.");
+        depositInfo[msg.sender] -= amount;
+        payable(msg.sender).call{value:amount}("");
+    }
+
+    function checkSlashEvidence() external payable {
+    }
 
     function setMarketRegistry(address registry_) public onlyOwner {
         registry = MarketRegistry(registry_);
@@ -78,7 +97,7 @@ contract OrderMatchEngine is Ownable, Staking {
 
     function submitOrder(uint256 intentID, bytes memory orderIntent) public {
         Intent memory intent = intentList[intentID];
-        console.log("current block.timestamp : %d", block.timestamp);
+        require(depositInfo[msg.sender] >= minimumDeposit, "Please deposit ethereum");
         require(intent.closeTime > block.timestamp, "The submission time for the order has already passed.");
         AppData memory appdata = registry.getAppMetadata(intent.appID);
         uint8 orderTypeFlag = Constraints(appdata.checkAddr).getScoringType();
@@ -104,6 +123,7 @@ contract OrderMatchEngine is Ownable, Staking {
                 orderInfo[intentID].submitTime = block.timestamp;
                 orderInfo[intentID].orderIntent = orderIntent;
                 orderInfo[intentID].sender = tx.origin;
+                recentActionTime[msg.sender] = block.timestamp;
                 emit OrderTempWinner(intentID, orderTypeFlag, type(uint256).max, tx.origin);
             }
         }
@@ -115,6 +135,7 @@ contract OrderMatchEngine is Ownable, Staking {
                 orderInfo[intentID].orderIntent = orderIntent;
                 orderInfo[intentID].score = orderScore;
                 orderInfo[intentID].sender = tx.origin;
+                recentActionTime[msg.sender] = block.timestamp;
                 emit OrderTempWinner(intentID, orderTypeFlag, orderScore, tx.origin);
             }
         }
@@ -126,6 +147,7 @@ contract OrderMatchEngine is Ownable, Staking {
                 orderInfo[intentID].orderIntent = orderIntent;
                 orderInfo[intentID].score = orderScore;
                 orderInfo[intentID].sender = tx.origin;
+                recentActionTime[msg.sender] = block.timestamp;
                 emit OrderTempWinner(intentID, orderTypeFlag, orderScore, tx.origin);
             }
         }
@@ -148,4 +170,6 @@ contract OrderMatchEngine is Ownable, Staking {
         require(intentList[intentId].creator==msg.sender);
         intentList[intentId].closeTime = block.timestamp;
     }
+
+    receive() external payable {}
 }
